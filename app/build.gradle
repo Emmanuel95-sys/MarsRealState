@@ -65,7 +65,6 @@ dependencies {
     
     // Retrofit
     implementation "com.squareup.retrofit2:retrofit:$version_retrofit"
-    implementation "com.squareup.retrofit2:converter-scalars:$version_retrofit"
 
     // moshi converter
     implementation "com.squareup.moshi:moshi:$version_moshi"
