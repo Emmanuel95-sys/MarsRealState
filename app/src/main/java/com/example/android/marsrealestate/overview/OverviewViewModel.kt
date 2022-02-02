@@ -21,25 +21,40 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.android.marsrealestate.network.MarsApi
-import com.example.android.marsrealestate.network.MarsProperty
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
  * The [ViewModel] that is attached to the [OverviewFragment].
  */
 class OverviewViewModel : ViewModel() {
 
-    // The internal MutableLiveData String that stores the status of the most recent request
+    /* The internal MutableLiveData String that stores the status of the most recent request */
     private val _response = MutableLiveData<String>()
 
-    // The external immutable LiveData for the request status String
+    /**
+     * The external immutable LiveData for the request status String
+     * */
     val response: LiveData<String>
         get() = _response
 
     /**
+     * since we are using coroutines we begin by creating a job thi allow us to use more straight
+     * forward code and error handling
+     */
+    private var viewModelJob = Job()
+
+    /**
+     * since retrofit does all of its work on a background thread
+     * there's no reason to use any other thread for our scope
+     * */
+    private val coroutineScope = CoroutineScope(viewModelJob + Dispatchers.Main)
+
+    /**
      * Call getMarsRealEstateProperties() on init so we can display status immediately.
+     * you must create your job and coroutine scope before the init block
      */
     init {
         getMarsRealEstateProperties()
@@ -49,17 +64,37 @@ class OverviewViewModel : ViewModel() {
      * Sets the value of the status LiveData to the Mars API status.
      */
     private fun getMarsRealEstateProperties() {
-        //the enqueue method (applicable on a callback) starts the network request on a background
-        // thread, the enqueue method takes a retrofit callback class as an input that contains
-        // methods that will be called when the request is complete.
-        MarsApi.retrofitService.getProperties().enqueue(object: Callback<List<MarsProperty>> {
-            override fun onResponse(call: Call<List<MarsProperty>>, response: Response<List<MarsProperty>>) {
-                _response.value = "Success ${response.body()?.size} Mars properties retrieved"
-            }
+        coroutineScope.launch {
+            /** coroutines are now managing concurrency
+            calling getProperties from our MarsApiService creates and starts the network call in
+            a background thread, returning the deferred.
+            Calling await on the deferred returns he result from the network call when
+            the value is ready.
+            await is non blocking which means this will trigger our API service to retrieve the
+            data from de network without blocking the current thread.
+            once it's done the code continues executing from where it left off */
+            val getPropertiesDeferred = MarsApi.retrofitService.getProperties()
+            /**
+             * we can now implement error handling as if the code wasn't happening asynchronously
+             * */
+                try{
+                    var listResult = getPropertiesDeferred.await()
+                    /** after awaiting on the deferred on the get properties line we can access the
+                     * the return value and set that value into the response just as if the network
+                     * operation wasn't happening in a background thread */
+                    _response.value = "Success ${listResult.size} Mars properties retrieved"
+                }catch (t: Throwable){
+                    _response.value = "Failure " + t.message
+                }
+        }
+    }
 
-            override fun onFailure(call: Call<List<MarsProperty>>, t: Throwable) {
-                _response.value = "Failure " + t.message
-            }
-        })
+    /**
+     * Loading data should stop when the viewModel is destroyed because the overview fragment
+     * will be gone, so we override onCleared to cancel our job
+     */
+    override fun onCleared() {
+        super.onCleared()
+        viewModelJob.cancel()
     }
 }
