@@ -21,6 +21,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.android.marsrealestate.network.MarsApi
+import com.example.android.marsrealestate.network.MarsProperty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,14 +32,24 @@ import kotlinx.coroutines.launch
  */
 class OverviewViewModel : ViewModel() {
 
-    /* The internal MutableLiveData String that stores the status of the most recent request */
-    private val _response = MutableLiveData<String>()
+    /** this live data is going to primarily be storing errors */
+    private val _status = MutableLiveData<String>()
 
     /**
      * The external immutable LiveData for the request status String
      * */
     val response: LiveData<String>
-        get() = _response
+        get() = _status
+
+    /**
+     * LiveData for our one Mars property
+     * internal MutableLiveData
+     * external LiveData
+     */
+    private val _property = MutableLiveData<MarsProperty>()
+
+    val property: LiveData<MarsProperty>
+    get() = _property
 
     /**
      * since we are using coroutines we begin by creating a job thi allow us to use more straight
@@ -82,9 +93,12 @@ class OverviewViewModel : ViewModel() {
                     /** after awaiting on the deferred on the get properties line we can access the
                      * the return value and set that value into the response just as if the network
                      * operation wasn't happening in a background thread */
-                    _response.value = "Success ${listResult.size} Mars properties retrieved"
+                    _status.value = "Success ${listResult.size} Mars properties retrieved"
+                    if(listResult.isNotEmpty()){
+                        _property.value = listResult.get(0)
+                    }
                 }catch (t: Throwable){
-                    _response.value = "Failure " + t.message
+                    _status.value = "Failure " + t.message
                 }
         }
     }

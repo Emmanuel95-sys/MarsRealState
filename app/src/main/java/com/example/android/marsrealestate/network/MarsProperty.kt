@@ -26,7 +26,7 @@ data class MarsProperty(
     // to use property names that differ form the attributes in the JSON response
     // we use the @Json(name="property_name_as_in_json" )
     @Json(name = "img_src")
-    val img_src: String,
+    val imgSrcUrl: String,
     val type: String,
     val price: Double
 )
