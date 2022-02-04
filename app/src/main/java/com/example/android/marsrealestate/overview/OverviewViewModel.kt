@@ -46,10 +46,10 @@ class OverviewViewModel : ViewModel() {
      * internal MutableLiveData
      * external LiveData
      */
-    private val _property = MutableLiveData<MarsProperty>()
+    private val _properties = MutableLiveData<List<MarsProperty>>()
 
-    val property: LiveData<MarsProperty>
-    get() = _property
+    val properties: LiveData<List<MarsProperty>>
+    get() = _properties
 
     /**
      * since we are using coroutines we begin by creating a job thi allow us to use more straight
@@ -89,13 +89,13 @@ class OverviewViewModel : ViewModel() {
              * we can now implement error handling as if the code wasn't happening asynchronously
              * */
                 try{
-                    var listResult = getPropertiesDeferred.await()
+                    val listResult = getPropertiesDeferred.await()
                     /** after awaiting on the deferred on the get properties line we can access the
                      * the return value and set that value into the response just as if the network
                      * operation wasn't happening in a background thread */
                     _status.value = "Success ${listResult.size} Mars properties retrieved"
                     if(listResult.isNotEmpty()){
-                        _property.value = listResult.get(0)
+                        _properties.value = listResult
                     }
                 }catch (t: Throwable){
                     _status.value = "Failure " + t.message
