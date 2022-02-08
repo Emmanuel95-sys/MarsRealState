@@ -27,18 +27,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+enum class MarsApiStatus{LOADING, ERROR, DONE}
 /**
  * The [ViewModel] that is attached to the [OverviewFragment].
  */
 class OverviewViewModel : ViewModel() {
 
     /** this live data is going to primarily be storing errors */
-    private val _status = MutableLiveData<String>()
+    private val _status = MutableLiveData<MarsApiStatus>()
 
     /**
      * The external immutable LiveData for the request status String
      * */
-    val response: LiveData<String>
+    val status: LiveData<MarsApiStatus>
         get() = _status
 
     /**
@@ -89,16 +90,21 @@ class OverviewViewModel : ViewModel() {
              * we can now implement error handling as if the code wasn't happening asynchronously
              * */
                 try{
+                    /**
+                     * we have 3 states to consider loading, success and failure
+                     * the loading state happens while we're waiting for data with the await call*/
+                    _status.value = MarsApiStatus.LOADING
                     val listResult = getPropertiesDeferred.await()
                     /** after awaiting on the deferred on the get properties line we can access the
                      * the return value and set that value into the response just as if the network
                      * operation wasn't happening in a background thread */
-                    _status.value = "Success ${listResult.size} Mars properties retrieved"
+                    _status.value = MarsApiStatus.DONE
                     if(listResult.isNotEmpty()){
                         _properties.value = listResult
                     }
                 }catch (t: Throwable){
-                    _status.value = "Failure " + t.message
+                    _status.value = MarsApiStatus.ERROR
+                    _properties.value = ArrayList()
                 }
         }
     }
