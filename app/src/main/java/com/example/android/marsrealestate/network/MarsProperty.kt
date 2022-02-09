@@ -17,10 +17,13 @@
 
 package com.example.android.marsrealestate.network
 
+import android.os.Parcelable
 import com.squareup.moshi.Json
+import kotlinx.android.parcel.Parcelize
 
 // If our data class has property names that match the properties in out Json response
 // Moshi machets them by name  and fills the data objects wit appropiate values and types
+@Parcelize
 data class MarsProperty(
     val id: String,
     // to use property names that differ form the attributes in the JSON response
@@ -29,4 +32,4 @@ data class MarsProperty(
     val imgSrcUrl: String,
     val type: String,
     val price: Double
-)
+) : Parcelable
