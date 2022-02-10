@@ -53,6 +53,14 @@ class OverviewViewModel : ViewModel() {
     get() = _properties
 
     /**
+     * Navigation in this architecture works by triggering a LiveData change in the viewModel
+     * for that we create a Mutable Live Data navigation property that we expose a LiveData
+     * */
+    private val _navigateToSelectedProperty = MutableLiveData<MarsProperty>()
+    val navigateToSelectedProperty : LiveData<MarsProperty>
+    get() = _navigateToSelectedProperty
+
+    /**
      * since we are using coroutines we begin by creating a job thi allow us to use more straight
      * forward code and error handling
      */
@@ -116,5 +124,23 @@ class OverviewViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         viewModelJob.cancel()
+    }
+
+    /**
+     * following the navigation pattern by adding a method that sets
+     * our navigateToSelectedProperty MLD to the selected MarsProperty
+     * */
+
+    fun displayPropertyDetails(marsProperty: MarsProperty){
+        _navigateToSelectedProperty.value = marsProperty
+    }
+
+    /**
+     * clear the LD to avoid being triggered again when we return from the detailView
+     * we add a second method
+     * */
+
+    fun displayPropertyDetailsComplete(){
+        _navigateToSelectedProperty.value = null
     }
 }
