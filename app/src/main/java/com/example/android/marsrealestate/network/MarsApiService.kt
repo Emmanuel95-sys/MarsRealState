@@ -24,8 +24,12 @@ import kotlinx.coroutines.Deferred
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Query
 
 private const val BASE_URL = "https://mars.udacity.com/"
+// define constants that match the query values our web service expects
+enum class MarsApiFilter(val value: String) {SHOW_RENT("rent"), SHOW_BUY("buy"),
+    SHOW_ALL("all")}
 
 // moshi object using a moshi builder.
 private val moshi = Moshi.Builder()
@@ -33,35 +37,42 @@ private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
     .build()
 
-// we're going to use this file to hold the network layer
-// the api that the viewModel uses to communicate with our web service.
+/**
+ * we're going to use this file to hold the network layer the api that the viewModel uses
+ * to communicate with our web service.
+ * */
 private val retrofit = Retrofit.Builder()
     .addConverterFactory(MoshiConverterFactory.create(moshi))
-    // coroutine call adapter enable retrofit to produce a coroutine based API
-    // call adapters add the ability for retrofit to create APIs that return other
-    // than the default call class.
+    /** coroutine call adapter enable retrofit to produce a coroutine based API
+     * call adapters add the ability for retrofit to create APIs that return other
+     * than the default call class.
+     * */
     .addCallAdapterFactory(CoroutineCallAdapterFactory())
     .baseUrl(BASE_URL)
     .build()
 
 interface MarsApiService{
     @GET("realestate")
-    fun getProperties():
-        //deferred is a coroutine job that can directly return a result
-        //a coroutine job provides a way of cancelling and determining the state of a coroutine
-        //unlike a job deferred has a method called await which is a suspend function on the
-        //deferred it causes the code to await without blocking in true coroutines fashion until the
-        //value is ready and then returned.
+    fun getPropertiesAsync(@Query("filter") type: String):
+        /**
+         * deferred is a coroutine job that can directly return a result
+         * a coroutine job provides a way of cancelling and determining the state of a coroutine
+         * unlike a job deferred has a method called await which is a suspend function on the
+         * deferred it causes the code to await without blocking in true coroutines fashion until the
+         * value is ready and then returned.
+         * */
         Deferred<List<MarsProperty>>
 }
 
-// to create a retrofit service you call retrofit.create passing in the service interface API
-// we just defined.
+/** to create a retrofit service you call retrofit.create passing in the service interface API
+ * we just defined.
+ * */
 object MarsApi{
     val retrofitService: MarsApiService by lazy {
-        // lazily initialized retrofit object
-        // calling MarsApi.retrofitService will return a retrofit object that implements
-        // MarsApiService.
+        /** lazily initialized retrofit object
+         * calling MarsApi.retrofitService will return a retrofit object that implements
+         * MarsApiService.
+         * */
         retrofit.create(MarsApiService::class.java)
     }
 }
