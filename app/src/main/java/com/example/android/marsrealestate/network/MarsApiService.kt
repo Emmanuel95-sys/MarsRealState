@@ -27,9 +27,12 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 private const val BASE_URL = "https://mars.udacity.com/"
+
 // define constants that match the query values our web service expects
-enum class MarsApiFilter(val value: String) {SHOW_RENT("rent"), SHOW_BUY("buy"),
-    SHOW_ALL("all")}
+enum class MarsApiFilter(val value: String) {
+    SHOW_RENT("rent"), SHOW_BUY("buy"),
+    SHOW_ALL("all")
+}
 
 // moshi object using a moshi builder.
 private val moshi = Moshi.Builder()
@@ -51,23 +54,23 @@ private val retrofit = Retrofit.Builder()
     .baseUrl(BASE_URL)
     .build()
 
-interface MarsApiService{
+interface MarsApiService {
+    /**
+     * deferred is a coroutine job that can directly return a result
+     * a coroutine job provides a way of cancelling and determining the state of a coroutine
+     * unlike a job deferred has a method called await which is a suspend function on the
+     * deferred it causes the code to await without blocking in true coroutines fashion until the
+     * value is ready and then returned.
+     * */
     @GET("realestate")
     fun getPropertiesAsync(@Query("filter") type: String):
-        /**
-         * deferred is a coroutine job that can directly return a result
-         * a coroutine job provides a way of cancelling and determining the state of a coroutine
-         * unlike a job deferred has a method called await which is a suspend function on the
-         * deferred it causes the code to await without blocking in true coroutines fashion until the
-         * value is ready and then returned.
-         * */
         Deferred<List<MarsProperty>>
 }
 
 /** to create a retrofit service you call retrofit.create passing in the service interface API
  * we just defined.
  * */
-object MarsApi{
+object MarsApi {
     val retrofitService: MarsApiService by lazy {
         /** lazily initialized retrofit object
          * calling MarsApi.retrofitService will return a retrofit object that implements

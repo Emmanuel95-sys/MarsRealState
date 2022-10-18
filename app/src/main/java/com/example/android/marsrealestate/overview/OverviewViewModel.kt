@@ -24,11 +24,12 @@ import com.example.android.marsrealestate.network.MarsApi
 import com.example.android.marsrealestate.network.MarsApiFilter
 import com.example.android.marsrealestate.network.MarsProperty
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-enum class MarsApiStatus{LOADING, ERROR, DONE}
+enum class MarsApiStatus { LOADING, ERROR, DONE }
 /**
  * The [ViewModel] that is attached to the [OverviewFragment].
  */
@@ -51,15 +52,15 @@ class OverviewViewModel : ViewModel() {
      */
     private val _properties = MutableLiveData<List<MarsProperty>>()
     val properties: LiveData<List<MarsProperty>>
-    get() = _properties
+        get() = _properties
 
     /**
      * Navigation in this architecture works by triggering a LiveData change in the viewModel
      * for that we create a Mutable Live Data navigation property that we expose a LiveData
      * */
     private val _navigateToSelectedProperty = MutableLiveData<MarsProperty>()
-    val navigateToSelectedProperty : LiveData<MarsProperty>
-    get() = _navigateToSelectedProperty
+    val navigateToSelectedProperty: LiveData<MarsProperty>
+        get() = _navigateToSelectedProperty
 
     /**
      * since we are using coroutines we begin by creating a job thi allow us to use more straight
@@ -86,35 +87,37 @@ class OverviewViewModel : ViewModel() {
      */
     private fun getMarsRealEstateProperties(filter: MarsApiFilter) {
         coroutineScope.launch {
-            /** coroutines are now managing concurrency
-            calling getProperties from our MarsApiService creates and starts the network call in
-            a background thread, returning the deferred.
-            Calling await on the deferred returns he result from the network call when
-            the value is ready.
-            await is non blocking which means this will trigger our API service to retrieve the
-            data from de network without blocking the current thread.
-            once it's done the code continues executing from where it left off */
-            val getPropertiesDeferred = MarsApi.retrofitService.getPropertiesAsync(filter.value)
+            /**
+             * Coroutines are now managing concurrency
+             * calling getProperties from our MarsApiService creates and starts the network call in
+             * a background thread, returning the deferred.
+             * Calling await on the deferred returns he result from the network call when
+             * the value is ready.
+             * await is non blocking which means this will trigger our API service to retrieve the
+             * data from de network without blocking the current thread.
+             * once it's done the code continues executing from where it left off
+             */
+            val getPropertiesDeferred: Deferred<List<MarsProperty>> = MarsApi.retrofitService.getPropertiesAsync(filter.value)
             /**
              * we can now implement error handling as if the code wasn't happening asynchronously
              * */
-                try{
-                    /**
-                     * we have 3 states to consider loading, success and failure
-                     * the loading state happens while we're waiting for data with the await call*/
-                    _status.value = MarsApiStatus.LOADING
-                    val listResult = getPropertiesDeferred.await()
-                    /** after awaiting on the deferred on the get properties line we can access the
-                     * the return value and set that value into the response just as if the network
-                     * operation wasn't happening in a background thread */
-                    _status.value = MarsApiStatus.DONE
-                    if(listResult.isNotEmpty()){
-                        _properties.value = listResult
-                    }
-                }catch (t: Throwable){
-                    _status.value = MarsApiStatus.ERROR
-                    _properties.value = ArrayList()
+            try {
+                /**
+                 * we have 3 states to consider loading, success and failure
+                 * the loading state happens while we're waiting for data with the await call*/
+                _status.value = MarsApiStatus.LOADING
+                val listResult = getPropertiesDeferred.await()
+                /** after awaiting on the deferred on the get properties line we can access the
+                 * the return value and set that value into the response just as if the network
+                 * operation wasn't happening in a background thread */
+                _status.value = MarsApiStatus.DONE
+                if (listResult.isNotEmpty()) {
+                    _properties.value = listResult
                 }
+            } catch (t: Throwable) {
+                _status.value = MarsApiStatus.ERROR
+                _properties.value = ArrayList()
+            }
         }
     }
 
@@ -132,7 +135,7 @@ class OverviewViewModel : ViewModel() {
      * our navigateToSelectedProperty MLD to the selected MarsProperty
      * */
 
-    fun displayPropertyDetails(marsProperty: MarsProperty){
+    fun displayPropertyDetails(marsProperty: MarsProperty) {
         _navigateToSelectedProperty.value = marsProperty
     }
 
@@ -141,7 +144,7 @@ class OverviewViewModel : ViewModel() {
      * we add a second method
      * */
 
-    fun displayPropertyDetailsComplete(){
+    fun displayPropertyDetailsComplete() {
         _navigateToSelectedProperty.value = null
     }
 
@@ -149,7 +152,7 @@ class OverviewViewModel : ViewModel() {
      * Method that takes a filter input and reload the properties with getMarsRealEstateProperties
      * using the filter value
      * */
-    fun updateFilter(filter: MarsApiFilter){
+    fun updateFilter(filter: MarsApiFilter) {
         getMarsRealEstateProperties(filter)
     }
 }

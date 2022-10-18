@@ -29,32 +29,34 @@ import com.example.android.marsrealestate.overview.MarsApiStatus
 import com.example.android.marsrealestate.overview.PhotoGridAdapter
 
 @BindingAdapter("listData")
-fun bindRecyclerView(recyclerView: RecyclerView, data: List<MarsProperty>?){
+fun bindRecyclerView(recyclerView: RecyclerView, data: List<MarsProperty>?) {
     val adapter = recyclerView.adapter as PhotoGridAdapter
     adapter.submitList(data)
 }
 
 @BindingAdapter("imageUrl")
-fun bindImage(imageView: ImageView, imgUrl: String?){
-    imgUrl?.let{
+fun bindImage(imageView: ImageView, imgUrl: String?) {
+    imgUrl?.let {
         val imgUri = it.toUri().buildUpon().scheme("https").build()
         Glide.with(imageView.context)
             .load(imgUri)
-            .apply(RequestOptions()
-                .placeholder(R.drawable.loading_animation)
-                .error(R.drawable.ic_broken_image))
+            .apply(
+                RequestOptions()
+                    .placeholder(R.drawable.loading_animation)
+                    .error(R.drawable.ic_broken_image)
+            )
             .into(imageView)
     } ?: imageView.setImageResource(R.drawable.ic_broken_image)
 }
 
 @BindingAdapter("marsApiStatus")
-fun bindStatus(statusImageView: ImageView, status: MarsApiStatus?){
-    when(status){
+fun bindStatus(statusImageView: ImageView, status: MarsApiStatus?) {
+    when (status) {
         MarsApiStatus.LOADING -> {
             statusImageView.visibility = View.VISIBLE
             statusImageView.setImageResource(R.drawable.loading_animation)
         }
-        MarsApiStatus.ERROR ->{
+        MarsApiStatus.ERROR -> {
             statusImageView.visibility = View.VISIBLE
             statusImageView.setImageResource(R.drawable.ic_connection_error)
         }
